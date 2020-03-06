@@ -12,37 +12,41 @@ logger = logging.getLogger(__name__)
 
 USERNAME, OFFICE, PLACE, PROBLEM = range(4)
 
+problems = []
 
 def start(update, context):
-    # reply_keyboard = [['Boy', 'Girl', 'Other']]
-
+    global problems
+    problems = []
+    
     update.message.reply_text(
         'Здравствуйте. Этот бот тех. поддержки.'
         'Отправьте /cancel для отмены.\n\n'
         'Просьба уточнить Ваш логин в сообщении:', reply_markup=ReplyKeyboardRemove())
-        # reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-
+     
     return USERNAME
 
 
 def username(update, context):
+    problems.append(f"Telegram username: @{update.message.from_user.username}")
+    problems.append(f"Username: {update.message.text}")
     reply_keyboard = [['Первый', 'Второй', 'Третий']]
     user = update.message.from_user
     logger.info("Username of %s: %s", user.first_name, update.message.text)
     update.message.reply_text('В каком офисе вы находитесь?'
                               'если не знаете отправьте /skip',
-                              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False))
 
     return OFFICE
 
 
 def office(update, context):
-    reply_keyboard = [['Кабинет1', 'Кабинет1', 'Кабинет1']]
+    problems.append(f"Офис: {update.message.text}")
+    reply_keyboard = [['Кабинет1', 'Кабинет2', 'Кабинет3']]
     user = update.message.from_user
     logger.info(f"Офис: {update.message.text}")
     update.message.reply_text('Просьба отправить кабинет.'
                               'или отправьте /skip если не знаете',
-                              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+                              reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False))
 
     return PLACE
 
@@ -56,6 +60,7 @@ def skip_office(update, context):
 
 
 def place(update, context):
+    problems.append(f"Место: {update.message.text}")
     user = update.message.from_user
     user_location = update.message.text
     logger.info(f'Number of cabinet is: {user_location}')
@@ -77,6 +82,8 @@ def problem(update, context):
     user = update.message.from_user
     logger.info(f"Pronlem: {update.message.text}")
     update.message.reply_text('Ваша проблема будет передана системному администратору')
+    problems.append(f"Описание: {update.message.text}")
+    context.bot.send_message(chat_id=367951128, text="\n".join(problems))
 
     return ConversationHandler.END
 
@@ -96,15 +103,13 @@ def error(update, context):
 
 
 def main():
-    # Create the Updater and pass it your bot's token.
-    # Make sure to set use_context=True to use the new context based callbacks
-    # Post version 12 this will no longer be necessary
+
     updater = Updater("1103159656:AAGJhmpijCeoxsQk1DZQfxKKgzv_VqdrLvI", use_context=True)
 
-    # Get the dispatcher to register handlers
+
     dp = updater.dispatcher
 
-    # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
@@ -114,7 +119,7 @@ def main():
             OFFICE: [MessageHandler(Filters.regex('^(Первый|Второй|Третий)$'), office), 
                     CommandHandler('skip', skip_office)],
 
-            PLACE: [MessageHandler(Filters.regex('^(Кабинет1|Кабинет1|Кабинет1)$'), place),
+            PLACE: [MessageHandler(Filters.regex('^(Кабинет1|Кабинет2|Кабинет3)$'), place),
                     CommandHandler('skip', skip_place)],
 
             PROBLEM: [MessageHandler(Filters.text, problem)]
@@ -131,9 +136,7 @@ def main():
     # Start the Bot
     updater.start_polling()
 
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
+
     updater.idle()
 
 
