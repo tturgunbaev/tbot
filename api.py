@@ -17,9 +17,9 @@ def send_message(chat_id, text):
     response = requests.post(url.format(token, methods['send']), params=payload)
     print(response.json())
 
-for _ in range(10):
-    text = "I love you Ainura"
-    send_message(578941100, text)
+# for _ in range(10):
+#     text = "I love you Ainura"
+#     send_message(578941100, text)
 
 def get_chat_id():
     response = requests.post(methods['getupdates'])
@@ -32,5 +32,5 @@ def kb(chat_id, text):
 
 # send_message(-419955772, 'SOme message')
 
-# response = requests.post(methods['getupdates'])
-# print(response.json()['result'])
+response = requests.post(methods['getupdates'])
+print(response.json()['result'])
